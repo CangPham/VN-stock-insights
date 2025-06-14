@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { AnalyzeStockOutput } from '@/ai/flows/analyze-stock-data';
@@ -8,9 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { BarChart3, CheckCircle2, DollarSign, Info, LineChart, Loader2, Search, TrendingDown, TrendingUp, XCircle } from 'lucide-react';
+import { BarChart3, CheckCircle2, DollarSign, Info, LineChart, Loader2, Search, TrendingUp, XCircle } from 'lucide-react';
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { getStockAnalysis, getCompanyInfo } from './actions';
@@ -66,11 +67,16 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeStockOutput | null>(null);
   const [companyInfo, setCompanyInfo] = useState<ResearchCompanyInformationOutput | null>(null);
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
   const { toast } = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm<StockSearchFormValues>({
     resolver: zodResolver(stockSearchSchema),
   });
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
 
   const onSubmit: SubmitHandler<StockSearchFormValues> = async (data) => {
     setIsLoading(true);
@@ -300,10 +306,12 @@ export default function HomePage() {
       <footer className="py-6 md:px-8 md:py-0 border-t bg-background">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-20 md:flex-row">
           <p className="text-sm leading-loose text-muted-foreground text-center">
-            © {new Date().getFullYear()} VN Stock Insights. All rights reserved. Financial data and recommendations are for informational purposes only.
+            {currentYear !== null ? `© ${currentYear} ` : ''}VN Stock Insights. All rights reserved. Financial data and recommendations are for informational purposes only.
           </p>
         </div>
       </footer>
     </div>
   );
 }
+
+    
