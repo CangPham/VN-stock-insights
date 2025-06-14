@@ -26,19 +26,19 @@ import { Bar, BarChart, CartesianGrid, Line, LineChart as RechartsLineChart, XAx
 
 
 const stockSearchSchema = z.object({
-  stockCode: z.string().min(2, 'Stock code must be at least 2 characters').max(10, 'Stock code must be at most 10 characters').regex(/^[a-zA-Z0-9]+$/, 'Stock code must be alphanumeric').toUpperCase(),
+  stockCode: z.string().min(2, 'Mã cổ phiếu phải có ít nhất 2 ký tự').max(10, 'Mã cổ phiếu tối đa 10 ký tự').regex(/^[a-zA-Z0-9]+$/, 'Mã cổ phiếu phải là chữ và số').toUpperCase(),
 });
 
 type StockSearchFormValues = z.infer<typeof stockSearchSchema>;
 
 // Placeholder chart data
 const priceChartData = [
-  { date: "Jan", price: 100 },
-  { date: "Feb", price: 110 },
-  { date: "Mar", price: 105 },
-  { date: "Apr", price: 120 },
-  { date: "May", price: 115 },
-  { date: "Jun", price: 130 },
+  { date: "Thg 1", price: 100 },
+  { date: "Thg 2", price: 110 },
+  { date: "Thg 3", price: 105 },
+  { date: "Thg 4", price: 120 },
+  { date: "Thg 5", price: 115 },
+  { date: "Thg 6", price: 130 },
 ];
 
 const revenueProfitChartData = [
@@ -56,10 +56,10 @@ const financialRatiosChartData = [
 ];
 
 const chartConfig = {
-  price: { label: "Price", color: "hsl(var(--primary))" },
-  revenue: { label: "Revenue", color: "hsl(var(--chart-1))" },
-  profit: { label: "Profit", color: "hsl(var(--chart-2))" },
-  value: { label: "Value", color: "hsl(var(--accent))" },
+  price: { label: "Giá", color: "hsl(var(--primary))" },
+  revenue: { label: "Doanh thu", color: "hsl(var(--chart-1))" },
+  profit: { label: "Lợi nhuận", color: "hsl(var(--chart-2))" },
+  value: { label: "Giá trị", color: "hsl(var(--accent))" },
 } satisfies ChartConfig;
 
 
@@ -91,11 +91,11 @@ export default function HomePage() {
       setAnalysisResult(analysis);
       setCompanyInfo(info);
     } catch (error) {
-      console.error("Error fetching stock data:", error);
+      console.error("Lỗi khi lấy dữ liệu cổ phiếu:", error);
       toast({
         variant: "destructive",
-        title: "Analysis Failed",
-        description: (error as Error).message || "Could not retrieve analysis for the stock. Please try again.",
+        title: "Phân Tích Thất Bại",
+        description: (error as Error).message || "Không thể lấy phân tích cho cổ phiếu. Vui lòng thử lại.",
       });
     } finally {
       setIsLoading(false);
@@ -107,7 +107,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           <LineChart className="h-8 w-8 text-primary" />
-          <h1 className="ml-3 text-2xl font-bold text-primary font-headline">VN Stock Insights</h1>
+          <h1 className="ml-3 text-2xl font-bold text-primary font-headline">Phân Tích Cổ Phiếu Việt Nam</h1>
         </div>
       </header>
 
@@ -115,19 +115,19 @@ export default function HomePage() {
         <section aria-labelledby="stock-search-heading" className="mb-12">
           <Card className="max-w-2xl mx-auto shadow-lg">
             <CardHeader>
-              <CardTitle id="stock-search-heading" className="text-2xl font-headline text-center">Analyze Vietnamese Stock</CardTitle>
+              <CardTitle id="stock-search-heading" className="text-2xl font-headline text-center">Phân Tích Cổ Phiếu Việt Nam</CardTitle>
               <CardDescription className="text-center">
-                Enter a Vietnamese stock code (e.g., FPT, VCB) to get AI-powered insights.
+                Nhập mã cổ phiếu Việt Nam (ví dụ: FPT, VCB) để nhận thông tin chi tiết từ AI.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="stockCode" className="text-base">Stock Code</Label>
+                  <Label htmlFor="stockCode" className="text-base">Mã Cổ Phiếu</Label>
                   <div className="flex gap-2">
                     <Input
                       id="stockCode"
-                      placeholder="e.g., FPT"
+                      placeholder="ví dụ: FPT"
                       aria-invalid={errors.stockCode ? "true" : "false"}
                       aria-describedby="stockCode-error"
                       className="text-base"
@@ -139,7 +139,7 @@ export default function HomePage() {
                       ) : (
                         <Search className="mr-2 h-5 w-5" />
                       )}
-                      Analyze
+                      Phân Tích
                     </Button>
                   </div>
                   {errors.stockCode && (
@@ -156,7 +156,7 @@ export default function HomePage() {
         {isLoading && (
           <div className="flex justify-center items-center my-12" aria-live="polite">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-4 text-xl text-foreground">Analyzing stock, please wait...</p>
+            <p className="ml-4 text-xl text-foreground">Đang phân tích cổ phiếu, vui lòng đợi...</p>
           </div>
         )}
 
@@ -169,32 +169,32 @@ export default function HomePage() {
                     <CardHeader>
                       <CardTitle id="analysis-results-heading" className="flex items-center text-xl font-headline">
                         <BarChart3 className="mr-2 h-6 w-6 text-primary" />
-                        AI Analysis & Recommendation
+                        Phân Tích & Khuyến Nghị AI
                       </CardTitle>
                       <CardDescription>
-                        For stock code: <span className="font-semibold text-primary">{stockSearchSchema.parse({stockCode: analysisResult.stockCode || ''}).stockCode}</span>
+                        Cho mã cổ phiếu: <span className="font-semibold text-primary">{stockSearchSchema.parse({stockCode: analysisResult.stockCode || ''}).stockCode}</span>
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
-                        {analysisResult.recommendation === 'buy' ? (
+                        {analysisResult.recommendation === 'mua' ? (
                           <CheckCircle2 className="h-10 w-10 text-green-600" />
                         ) : (
                           <XCircle className="h-10 w-10 text-red-600" />
                         )}
                         <div>
                           <p className="text-lg font-semibold">
-                            Recommendation: <span className={`capitalize ${analysisResult.recommendation === 'buy' ? 'text-green-700' : 'text-red-700'}`}>{analysisResult.recommendation}</span>
+                            Khuyến Nghị: <span className={`capitalize ${analysisResult.recommendation === 'mua' ? 'text-green-700' : 'text-red-700'}`}>{analysisResult.recommendation}</span>
                           </p>
-                          {analysisResult.recommendation === 'buy' && analysisResult.suggestedPrice && (
+                          {analysisResult.recommendation === 'mua' && analysisResult.suggestedPrice && (
                             <p className="text-sm text-muted-foreground">
-                              Suggested Price: <span className="font-medium text-foreground">{analysisResult.suggestedPrice.toLocaleString()} VND</span>
+                              Giá Đề Xuất: <span className="font-medium text-foreground">{analysisResult.suggestedPrice.toLocaleString()} VND</span>
                             </p>
                           )}
                         </div>
                       </div>
                        <div className="p-3 bg-muted/50 rounded-lg">
-                        <p className="text-sm font-medium text-foreground">Confidence Level</p>
+                        <p className="text-sm font-medium text-foreground">Mức Độ Tin Cậy</p>
                         <div className="w-full bg-border rounded-full h-2.5 my-1">
                           <div
                             className="bg-accent h-2.5 rounded-full"
@@ -208,9 +208,9 @@ export default function HomePage() {
                         <p className="text-xs text-muted-foreground text-right">{(analysisResult.confidenceLevel * 100).toFixed(0)}%</p>
                       </div>
                       <div>
-                        <h4 className="font-semibold mb-1 text-foreground">Detailed Analysis:</h4>
+                        <h4 className="font-semibold mb-1 text-foreground">Phân Tích Chi Tiết:</h4>
                         <ScrollArea className="h-40 w-full rounded-md border p-3 text-sm">
-                          {analysisResult.analysis || "No detailed analysis provided."}
+                          {analysisResult.analysis || "Không có phân tích chi tiết."}
                         </ScrollArea>
                       </div>
                     </CardContent>
@@ -222,16 +222,16 @@ export default function HomePage() {
                     <CardHeader>
                       <CardTitle className="flex items-center text-xl font-headline">
                         <Info className="mr-2 h-6 w-6 text-primary" />
-                        Company Information
+                        Thông Tin Công Ty
                       </CardTitle>
                        <CardDescription>
-                        Summary for: <span className="font-semibold text-primary">{stockSearchSchema.parse({stockCode: companyInfo.stockCode || ''}).stockCode}</span>
+                        Tóm tắt cho: <span className="font-semibold text-primary">{stockSearchSchema.parse({stockCode: companyInfo.stockCode || ''}).stockCode}</span>
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <h4 className="font-semibold mb-1 text-foreground">Company Summary:</h4>
+                      <h4 className="font-semibold mb-1 text-foreground">Tóm Tắt Công Ty:</h4>
                       <ScrollArea className="h-[calc(8rem+100px)] w-full rounded-md border p-3 text-sm"> {/* Adjusted height to match analysis card content area more closely */}
-                        {companyInfo.companySummary || "No company summary available."}
+                        {companyInfo.companySummary || "Không có tóm tắt công ty."}
                       </ScrollArea>
                     </CardContent>
                   </Card>
@@ -241,13 +241,13 @@ export default function HomePage() {
             
             <section aria-labelledby="financial-charts-heading" className="mt-12">
               <h2 id="financial-charts-heading" className="text-2xl font-bold mb-6 text-center font-headline text-primary">
-                Illustrative Financial Charts
+                Biểu Đồ Tài Chính Minh Họa
               </h2>
-              <p className="text-center text-muted-foreground mb-6">Note: These charts display placeholder data for illustrative purposes.</p>
+              <p className="text-center text-muted-foreground mb-6">Lưu ý: Các biểu đồ này hiển thị dữ liệu giữ chỗ cho mục đích minh họa.</p>
               <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 <Card className="shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center"><TrendingUp className="mr-2 h-5 w-5 text-accent" />Price Trend (Illustrative)</CardTitle>
+                    <CardTitle className="flex items-center"><TrendingUp className="mr-2 h-5 w-5 text-accent" />Xu Hướng Giá (Minh Họa)</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -264,7 +264,7 @@ export default function HomePage() {
 
                 <Card className="shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center"><DollarSign className="mr-2 h-5 w-5 text-accent" />Revenue & Profit (Illustrative)</CardTitle>
+                    <CardTitle className="flex items-center"><DollarSign className="mr-2 h-5 w-5 text-accent" />Doanh Thu & Lợi Nhuận (Minh Họa)</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -283,7 +283,7 @@ export default function HomePage() {
 
                 <Card className="shadow-lg lg:col-span-2 xl:col-span-1">
                   <CardHeader>
-                    <CardTitle className="flex items-center"><BarChart3 className="mr-2 h-5 w-5 text-accent" />Key Ratios (Illustrative)</CardTitle>
+                    <CardTitle className="flex items-center"><BarChart3 className="mr-2 h-5 w-5 text-accent" />Chỉ Số Quan Trọng (Minh Họa)</CardTitle>
                   </CardHeader>
                   <CardContent>
                      <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -306,7 +306,7 @@ export default function HomePage() {
       <footer className="py-6 md:px-8 md:py-0 border-t bg-background">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-20 md:flex-row">
           <p className="text-sm leading-loose text-muted-foreground text-center">
-            {currentYear !== null ? `© ${currentYear} ` : ''}VN Stock Insights. All rights reserved. Financial data and recommendations are for informational purposes only.
+            {currentYear !== null ? `© ${currentYear} ` : ''}Phân Tích Cổ Phiếu Việt Nam. Bảo lưu mọi quyền. Dữ liệu tài chính và khuyến nghị chỉ mang tính chất tham khảo.
           </p>
         </div>
       </footer>
