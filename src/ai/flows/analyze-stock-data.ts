@@ -59,15 +59,18 @@ const analyzeStockPrompt = ai.definePrompt({
   input: {schema: AnalyzeStockInputSchema},
   output: {schema: AnalyzeStockOutputSchema},
   prompt: `You are a financial analyst specializing in Vietnamese stocks.
+Your task is to analyze a stock based on its stock code.
+To do this, you MUST use the 'fetchStockData' tool to get the latest financial reports, business results, and related data for the given stock code.
 
-  Analyze the provided stock data and provide a buy/no buy recommendation.
-  If you recommend buying, provide a suggested purchase price.
-  Also, provide a confidence level (0-1) for your recommendation.
+Stock Code: {{{stockCode}}}
 
-  Stock Code: {{{stockCode}}}
-  Stock Data: {{await fetchStockData stockCode=stockCode}}
-
-  Based on the stock data, provide a recommendation, suggested purchase price (if applicable), confidence level, and a detailed analysis.
+After fetching the data using the 'fetchStockData' tool, analyze it thoroughly.
+Based on your analysis of the fetched data, provide:
+1. A clear "buy" or "no buy" recommendation.
+2. If the recommendation is "buy", suggest a purchase price.
+3. A confidence level (from 0.0 to 1.0) for your recommendation.
+4. A detailed analysis explaining your reasoning.
+Ensure your output strictly adheres to the defined schema.
 `,
 });
 
