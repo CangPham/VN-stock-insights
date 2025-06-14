@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
     --background: 80 10% 90%; /* Light Sage E9EAE4 */
@@ -106,6 +102,7 @@ body {
     @apply border-border;
   }
   body {
+    font-family: 'Inter', sans-serif;
     @apply bg-background text-foreground;
   }
 }
