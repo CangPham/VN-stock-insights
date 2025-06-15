@@ -106,7 +106,7 @@ export abstract class BaseApiClient {
   abstract testConnection(): Promise<boolean>;
 
   // Protected method cho HTTP requests với retry logic
-  protected async makeRequest<T>(
+  protected async makeRequest<T = any>(
     url: string,
     options: RequestInit = {},
     schema?: z.ZodSchema<T>
@@ -243,7 +243,7 @@ export abstract class BaseApiClient {
   }
 
   // Generate unique request ID
-  private generateRequestId(): string {
+  protected generateRequestId(): string {
     return `${this.sourceType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 

@@ -122,7 +122,7 @@ export abstract class BaseValidator<T> {
             severity: ValidationSeverity.ERROR,
             field: err.path.join('.'),
             message: err.message,
-            value: err.received,
+            value: (err as any).received,
             rule: err.code
           });
         });

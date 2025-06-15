@@ -106,7 +106,9 @@ export const DEFAULT_CONFIGS: Record<DataSourceType, Partial<DataSourceConfig>> 
     },
     metadata: {
       description: 'FireAnt - Nguồn dữ liệu tài chính chính thức',
-      documentation: 'https://docs.fireant.vn'
+      documentation: 'https://docs.fireant.vn',
+      version: '1.0.0',
+      lastUpdated: new Date()
     }
   },
 
@@ -143,7 +145,9 @@ export const DEFAULT_CONFIGS: Record<DataSourceType, Partial<DataSourceConfig>> 
     },
     metadata: {
       description: 'CafeF - Tin tức và dữ liệu thị trường',
-      documentation: 'https://cafef.vn'
+      documentation: 'https://cafef.vn',
+      version: '1.0.0',
+      lastUpdated: new Date()
     }
   },
 
@@ -180,7 +184,9 @@ export const DEFAULT_CONFIGS: Record<DataSourceType, Partial<DataSourceConfig>> 
     },
     metadata: {
       description: 'VietStock - Phân tích kỹ thuật và thông tin cổ phiếu',
-      documentation: 'https://vietstock.vn'
+      documentation: 'https://vietstock.vn',
+      version: '1.0.0',
+      lastUpdated: new Date()
     }
   },
 
@@ -214,7 +220,9 @@ export const DEFAULT_CONFIGS: Record<DataSourceType, Partial<DataSourceConfig>> 
       credentials: {}
     },
     metadata: {
-      description: 'SSI - API chính thức từ công ty chứng khoán SSI'
+      description: 'SSI - API chính thức từ công ty chứng khoán SSI',
+      version: '1.0.0',
+      lastUpdated: new Date()
     }
   },
 
@@ -248,7 +256,9 @@ export const DEFAULT_CONFIGS: Record<DataSourceType, Partial<DataSourceConfig>> 
       credentials: {}
     },
     metadata: {
-      description: 'VPS - API chính thức từ công ty chứng khoán VPS'
+      description: 'VPS - API chính thức từ công ty chứng khoán VPS',
+      version: '1.0.0',
+      lastUpdated: new Date()
     }
   },
 
@@ -278,7 +288,9 @@ export const DEFAULT_CONFIGS: Record<DataSourceType, Partial<DataSourceConfig>> 
       tradeTicks: false
     },
     metadata: {
-      description: 'HOSE - Sở Giao dịch Chứng khoán TP.HCM'
+      description: 'HOSE - Sở Giao dịch Chứng khoán TP.HCM',
+      version: '1.0.0',
+      lastUpdated: new Date()
     }
   },
 
@@ -308,7 +320,9 @@ export const DEFAULT_CONFIGS: Record<DataSourceType, Partial<DataSourceConfig>> 
       tradeTicks: false
     },
     metadata: {
-      description: 'HNX - Sở Giao dịch Chứng khoán Hà Nội'
+      description: 'HNX - Sở Giao dịch Chứng khoán Hà Nội',
+      version: '1.0.0',
+      lastUpdated: new Date()
     }
   }
 };

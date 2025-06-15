@@ -40,6 +40,7 @@ export interface ApiError {
   retryable: boolean;
   details?: Record<string, any>;
   originalError?: Error;
+  toJSON?(): Record<string, any>;
 }
 
 // Schema cho error response
@@ -380,7 +381,7 @@ export class ErrorHandler {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('API Error:', error.toJSON());
+      console.error('API Error:', error.toJSON?.() ?? error);
     }
   }
 
