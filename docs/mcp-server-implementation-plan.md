@@ -314,11 +314,143 @@ const AnalyzeStockSchema = z.object({
 });
 ```
 
+## Updated Implementation Strategy (Based on Official MCP Patterns)
+
+### Simplified Architecture Using Official SDK
+
+Based on analysis of official MCP repositories and TypeScript SDK, we will use the high-level `McpServer` class instead of building custom protocol handlers:
+
+```typescript
+// src/mcp/vn-stock-server.ts
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+export class VNStockMCPServer {
+  private server: McpServer;
+  private dataProviders: Map<DataSourceType, BaseApiClient>;
+
+  constructor() {
+    this.server = new McpServer({
+      name: "VN-Stock-Insights",
+      version: "1.0.0"
+    });
+
+    this.setupResources();
+    this.setupTools();
+    this.setupPrompts();
+  }
+
+  async connect(transport: any) {
+    await this.server.connect(transport);
+  }
+}
+```
+
+### Official Resource Patterns
+
+```typescript
+// Vietnamese Stock Resource URI Patterns (Following Official Standards)
+const VN_STOCK_RESOURCES = {
+  STOCK_INFO: "stock://{symbol}",
+  STOCK_FINANCIALS: "stock://{symbol}/financials",
+  STOCK_NEWS: "stock://{symbol}/news",
+  MARKET_INDEX: "market://{index}",
+  SECTOR_DATA: "sector://{sector}",
+  ANALYSIS: "analysis://{symbol}/{type}"
+} as const;
+
+// Resource implementation with official content format
+private setupResources() {
+  this.server.resource(
+    "stock-info",
+    new ResourceTemplate("stock://{symbol}", { list: undefined }),
+    async (uri, { symbol }) => ({
+      contents: [{
+        uri: uri.href,
+        text: JSON.stringify(await this.getStockDataWithFailover(symbol), null, 2),
+        mimeType: "application/json"
+      }]
+    })
+  );
+}
+```
+
+### Official Tool Implementation with Failover
+
+```typescript
+private setupTools() {
+  // Real-time stock price with official response format
+  this.server.tool(
+    "get_stock_price",
+    {
+      symbol: z.string().min(2).max(10),
+      exchange: z.enum(['HOSE', 'HNX', 'UPCOM']).optional()
+    },
+    async ({ symbol, exchange }) => {
+      try {
+        const priceData = await this.getStockPriceWithFailover(symbol, exchange);
+
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              symbol,
+              price: priceData.price,
+              change: priceData.change,
+              changePercent: priceData.changePercent,
+              timestamp: new Date().toISOString(),
+              source: priceData.source
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: `Failed to fetch price data for ${symbol}: ${error.message}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+}
+```
+
+### Transport Configuration
+
+```typescript
+// Development setup (stdio)
+async function startDevelopmentServer() {
+  const server = new VNStockMCPServer();
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+
+// Production setup (Streamable HTTP)
+async function startProductionServer() {
+  const app = express();
+  const server = new VNStockMCPServer();
+
+  // Use official Streamable HTTP transport
+  const transports: Record<string, StreamableHTTPServerTransport> = {};
+
+  app.post('/mcp', async (req, res) => {
+    // Implementation following official session management pattern
+    // See: https://github.com/modelcontextprotocol/typescript-sdk
+  });
+
+  app.listen(3001);
+}
+```
+
 ## Next Steps
 
-1. Begin Phase 1 implementation with MCP protocol handler
-2. Set up development environment with MCP SDK
-3. Create initial resource and tool definitions
-4. Implement basic Vietnamese stock data integration
+1. **Implement Simplified Architecture**: Use `McpServer` class directly instead of custom protocol handlers
+2. **Follow Official Patterns**: Implement resources, tools, and prompts using official SDK patterns
+3. **Integrate with Existing Infrastructure**: Connect to existing data providers and configuration system
+4. **Add Development Tools**: Set up testing with MCP Inspector and debugging tools
+5. **Create Production Deployment**: Implement Streamable HTTP transport for production use
 
-This plan provides a comprehensive roadmap for developing a robust MCP server that will significantly enhance the Vietnamese Stock Market Insights platform with real-time data access and improved user experience.
+This updated plan aligns with official MCP best practices while leveraging our existing Vietnamese stock market infrastructure for a robust and maintainable implementation.
