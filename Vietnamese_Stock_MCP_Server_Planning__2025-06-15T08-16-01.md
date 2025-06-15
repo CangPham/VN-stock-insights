@@ -42,3 +42,4 @@
 -[ ] NAME:Create User Configuration Guide DESCRIPTION:Write user-friendly guide for configuring API credentials, data sources, and system preferences
 -[ ] NAME:Build Deployment and Operations Guide DESCRIPTION:Create deployment documentation including server setup, environment configuration, and operational procedures
 -[ ] NAME:Finalize Project Documentation DESCRIPTION:Complete project documentation with architecture overview, troubleshooting guide, and future enhancement roadmap
+-[ ] NAME:Integrate MCP Server with Next.js App DESCRIPTION:Add entrypoint and npm script to run the MCP server from the main project
