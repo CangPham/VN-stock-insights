@@ -1,58 +1,60 @@
-import { BaseApiClient, ApiResponse } from './base-client';
 
 /**
- * FailoverManager - Cơ chế chuyển đổi dự phòng giữa nhiều nguồn dữ liệu
- * Thử lần lượt các API client cho tới khi nhận được kết quả thành công
+ * @fileOverview Failover Manager - Cơ chế chuyển đổi dự phòng cho các API client
+ * Thử nhiều nguồn dữ liệu khi một nguồn không khả dụng
  */
-export class FailoverManager {
-  constructor(private clients: BaseApiClient[] = []) {}
 
-  /** Thay đổi danh sách client ưu tiên */
-  updateClients(clients: BaseApiClient[]): void {
-    this.clients = clients;
+import type { BaseApiClient, ApiResponse } from './base-client';
+import { ApiErrorClass, ErrorType } from './error-handler';
+
+export interface FailoverConfig {
+  primary: BaseApiClient;
+  backups: BaseApiClient[];
+}
+
+export class FailoverManager {
+  private primary: BaseApiClient;
+  private backups: BaseApiClient[];
+
+  constructor(config: FailoverConfig) {
+    this.primary = config.primary;
+    this.backups = config.backups;
+  }
+
+  public updatePrimary(client: BaseApiClient): void {
+    this.primary = client;
+  }
+
+  public updateBackups(backups: BaseApiClient[]): void {
+    this.backups = backups;
   }
 
   /**
-   * Thực thi một hành động với cơ chế failover
-   * @param operation Hàm thực thi trên từng client
+   * Thực thi một hàm lấy dữ liệu với cơ chế chuyển đổi dự phòng.
+   * Hàm sẽ thử lần lượt các client cho tới khi thành công.
    */
-  private async executeWithFailover<T>(operation: (client: BaseApiClient) => Promise<ApiResponse<T>>): Promise<ApiResponse<T>> {
-    let lastError: any;
-    for (const client of this.clients) {
+  public async fetchWithFailover<T>(operation: (client: BaseApiClient) => Promise<ApiResponse<T>>): Promise<ApiResponse<T>> {
+    const clients = [this.primary, ...this.backups];
+    const errors: unknown[] = [];
+
+    for (const client of clients) {
+
       try {
         const result = await operation(client);
         if (result.success) {
           return result;
         }
-        lastError = result.error;
+
+        errors.push(result.error);
       } catch (error) {
-        lastError = error instanceof Error ? error.message : error;
+        errors.push(error);
       }
     }
-    throw new Error(`All data sources failed: ${lastError}`);
-  }
 
-  getStockInfo(stockCode: string) {
-    return this.executeWithFailover(c => c.getStockInfo(stockCode));
-  }
-
-  getRealTimePrice(stockCode: string) {
-    return this.executeWithFailover(c => c.getRealTimePrice(stockCode));
-  }
-
-  getOrderBook(stockCode: string) {
-    return this.executeWithFailover(c => c.getOrderBook(stockCode));
-  }
-
-  getTradeTicks(stockCode: string, limit?: number) {
-    return this.executeWithFailover(c => c.getTradeTicks(stockCode, limit));
-  }
-
-  getFinancialReport(stockCode: string, year: number, quarter?: number) {
-    return this.executeWithFailover(c => c.getFinancialReport(stockCode, year, quarter));
-  }
-
-  getMarketIndex(indexCode: string) {
-    return this.executeWithFailover(c => c.getMarketIndex(indexCode));
+    throw new ApiErrorClass(ErrorType.SERVICE_UNAVAILABLE, 'All data sources failed', {
+      source: 'FailoverManager',
+      retryable: true,
+      details: { errors }
+    });
   }
 }

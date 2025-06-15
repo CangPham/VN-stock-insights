@@ -1,3 +1,4 @@
+
 // src/ai/flows/recommend-stock-action.ts
 'use server';
 
@@ -14,19 +15,34 @@ const RecommendStockInputSchema = z.object({
 export type RecommendStockInput = z.infer<typeof RecommendStockInputSchema>;
 
 const RecommendStockOutputSchema = z.object({
-  recommendation: z.enum(['buy', 'no buy']).describe('Khuyến nghị mua hoặc không mua.'),
-  reason: z.string().describe('Giải thích ngắn gọn lý do khuyến nghị.'),
+  recommendation: z.enum(['buy', 'no buy']).describe('Buy or no buy recommendation.'),
+  rationale: z.string().describe('Short explanation for the recommendation.'),
+  stockCode: z.string().optional().describe('Stock code that was analyzed.'),
 });
 export type RecommendStockOutput = z.infer<typeof RecommendStockOutputSchema>;
 
 export async function recommendStockAction(
-  input: RecommendStockInput,
+  input: RecommendStockInput
 ): Promise<RecommendStockOutput> {
-  const prompt = ai`
-    Bạn là chuyên gia phân tích cổ phiếu Việt Nam. 
-    Hãy đưa ra khuyến nghị mua hoặc không mua cho mã cổ phiếu {{stockCode}} cùng lý do ngắn gọn.
-  `;
-  const result = await prompt.generate({ stockCode: input.stockCode });
-  const recommendation = result.text.toLowerCase().includes('mua') ? 'buy' : 'no buy';
-  return { recommendation, reason: result.text };
+  const result = await recommendStockFlow(input);
+  return { ...result, stockCode: input.stockCode };
 }
+
+const recommendStockPrompt = ai.definePrompt({
+  name: 'recommendStockPrompt',
+  input: { schema: RecommendStockInputSchema },
+  output: { schema: RecommendStockOutputSchema },
+  prompt: `Bạn là một chuyên gia phân tích cổ phiếu Việt Nam. Hãy phân tích mã cổ phiếu {{{stockCode}}} và đưa ra khuyến nghị \"buy\" hoặc \"no buy\" kèm theo lý do ngắn gọn.`,
+});
+
+const recommendStockFlow = ai.defineFlow(
+  {
+    name: 'recommendStockFlow',
+    inputSchema: RecommendStockInputSchema,
+    outputSchema: RecommendStockOutputSchema,
+  },
+  async (input) => {
+    const { output } = await recommendStockPrompt(input);
+    return output!;
+  }
+);
