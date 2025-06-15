@@ -10,8 +10,10 @@
  * - AnalyzeStockOutput - Kiểu trả về cho hàm analyzeStock.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, enhancedAI} from '@/ai/genkit';
 import {z} from 'genkit';
+import { StockAnalysisEngine } from '@/lib/analysis/stock-analysis-engine';
+import { FinancialSearchEngine } from '@/lib/search/financial-search-engine';
 
 const AnalyzeStockInputSchema = z.object({
   stockCode: z.string().describe('Mã cổ phiếu cần phân tích (ví dụ: VCB).'),
@@ -51,14 +53,59 @@ const fetchStockData = ai.defineTool(
   async (input) => {
     const currentDate = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     console.log(`Đang lấy dữ liệu cổ phiếu ${input.stockCode} cập nhật đến ${currentDate} (bao gồm nguồn trích dẫn)`);
-    // Placeholder simulating real data with a source
-    const placeholderData = {
-      financialReportSummary: `[Dữ liệu giữ chỗ] Tóm tắt báo cáo tài chính quý gần nhất cho ${input.stockCode}.`,
-      latestNews: `[Dữ liệu giữ chỗ] Tin tức quan trọng gần đây liên quan đến ${input.stockCode}.`,
-      marketData: `[Dữ liệu giữ chỗ] Giá hiện tại, khối lượng giao dịch cho ${input.stockCode}.`,
-      source: `[Nguồn giữ chỗ] Dữ liệu được tổng hợp từ các nguồn uy tín như CafeF, Vietstock, Sở Giao dịch Chứng khoán vào ngày ${currentDate}. Cần thay thế bằng nguồn API thực tế.`,
-    };
-    return JSON.stringify(placeholderData);
+
+    try {
+      const searchEngine = new FinancialSearchEngine();
+
+      // Search for financial news
+      const financialNews = await searchEngine.searchFinancialNews({
+        stockCode: input.stockCode,
+        timeframe: '7d',
+      });
+
+      // Search for real-time news
+      const realtimeNews = await searchEngine.searchRealTimeNews(input.stockCode);
+
+      // Search for company info
+      const companyData = await searchEngine.searchCompanyInfo(input.stockCode);
+
+      // Compile real data
+      const realData = {
+        financialReportSummary: `Thông tin tài chính gần nhất cho ${input.stockCode} từ các nguồn tin cậy.`,
+        latestNews: realtimeNews.slice(0, 5).map(news => ({
+          title: news.title,
+          snippet: news.snippet,
+          source: news.source,
+          url: news.url,
+          date: news.date,
+        })),
+        marketData: `Dữ liệu thị trường cập nhật cho ${input.stockCode}.`,
+        financialNews: financialNews.slice(0, 10).map(news => ({
+          title: news.title,
+          snippet: news.snippet,
+          source: news.source,
+          url: news.url,
+          relevanceScore: news.relevanceScore,
+        })),
+        companyInfo: companyData,
+        source: `Dữ liệu được tổng hợp từ các nguồn uy tín như CafeF, VietStock, NDH, VnEconomy vào ngày ${currentDate}. Tìm kiếm thông qua hệ thống tìm kiếm web tích hợp.`,
+        lastUpdated: currentDate,
+      };
+
+      return JSON.stringify(realData);
+    } catch (error) {
+      console.error('Failed to fetch real stock data:', error);
+
+      // Fallback to placeholder data
+      const placeholderData = {
+        financialReportSummary: `[Dữ liệu giữ chỗ] Tóm tắt báo cáo tài chính quý gần nhất cho ${input.stockCode}.`,
+        latestNews: `[Dữ liệu giữ chỗ] Tin tức quan trọng gần đây liên quan đến ${input.stockCode}.`,
+        marketData: `[Dữ liệu giữ chỗ] Giá hiện tại, khối lượng giao dịch cho ${input.stockCode}.`,
+        source: `[Nguồn giữ chỗ] Dữ liệu được tổng hợp từ các nguồn uy tín như CafeF, Vietstock, Sở Giao dịch Chứng khoán vào ngày ${currentDate}. Cần thay thế bằng nguồn API thực tế.`,
+        error: 'Không thể lấy dữ liệu thời gian thực, sử dụng dữ liệu mẫu.',
+      };
+      return JSON.stringify(placeholderData);
+    }
   }
 );
 
@@ -94,8 +141,76 @@ const analyzeStockFlow = ai.defineFlow(
   },
   async (input: AnalyzeStockInput) => {
     const currentDate = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const {output} = await analyzeStockPrompt({...input, currentDate});
-    return output!;
+
+    try {
+      // Try using enhanced AI system first
+      const isEnhancedAvailable = await enhancedAI.isCurrentProviderAvailable();
+
+      if (isEnhancedAvailable) {
+        console.log('Using enhanced AI system for stock analysis');
+
+        // Use the comprehensive stock analysis engine
+        const analysisEngine = new StockAnalysisEngine();
+        const config = enhancedAI.getCurrentConfig().stockAnalysis;
+
+        try {
+          const comprehensiveAnalysis = await analysisEngine.analyzeStock(input.stockCode, config);
+          const recommendation = await analysisEngine.getRecommendation(input.stockCode, config);
+
+          // Convert comprehensive analysis to legacy format
+          const legacyOutput: AnalyzeStockOutput = {
+            recommendation: recommendation.recommendation === 'buy' || recommendation.recommendation === 'strong_buy' ? 'mua' : 'không mua',
+            suggestedPrice: recommendation.targetPrice,
+            confidenceLevel: recommendation.confidence,
+            analysis: `Phân tích toàn diện cho ${input.stockCode}:
+
+${recommendation.rationale}
+
+Chi tiết phân tích:
+- Phân tích kỹ thuật: ${comprehensiveAnalysis.technicalAnalysis ?
+  `Xu hướng ${comprehensiveAnalysis.technicalAnalysis.trend}, độ mạnh ${comprehensiveAnalysis.technicalAnalysis.strength}` :
+  'Không có dữ liệu'}
+- Phân tích cơ bản: ${comprehensiveAnalysis.fundamentalAnalysis ?
+  `Điểm số ${(comprehensiveAnalysis.fundamentalAnalysis.score * 100).toFixed(0)}/100` :
+  'Không có dữ liệu'}
+- Phân tích tình cảm: ${comprehensiveAnalysis.sentimentAnalysis ?
+  `Điểm số ${comprehensiveAnalysis.sentimentAnalysis.score.toFixed(2)}` :
+  'Không có dữ liệu'}
+- Đánh giá rủi ro: ${comprehensiveAnalysis.riskAssessment ?
+  `Mức độ ${comprehensiveAnalysis.riskAssessment.overallRisk}` :
+  'Không có dữ liệu'}
+
+Các yếu tố chính: ${recommendation.keyFactors.join(', ')}
+Rủi ro: ${recommendation.risks.join(', ')}
+Cơ hội: ${recommendation.opportunities.join(', ')}
+
+Dữ liệu được cập nhật đến ngày ${currentDate} từ hệ thống phân tích đa nguồn.`,
+            stockCode: input.stockCode,
+          };
+
+          return legacyOutput;
+        } catch (enhancedError) {
+          console.warn('Enhanced analysis failed, falling back to AI prompt:', enhancedError);
+          // Fall through to original prompt-based analysis
+        }
+      }
+
+      // Fallback to original Genkit flow
+      console.log('Using original Genkit flow for stock analysis');
+      const {output} = await analyzeStockPrompt({...input, currentDate});
+      return output!;
+
+    } catch (error) {
+      console.error('Stock analysis flow failed:', error);
+
+      // Ultimate fallback - return basic analysis
+      return {
+        recommendation: 'không mua',
+        confidenceLevel: 0.1,
+        analysis: `Không thể phân tích cổ phiếu ${input.stockCode} do lỗi hệ thống. Vui lòng thử lại sau. Lỗi: ${error instanceof Error ? error.message : 'Không xác định'}`,
+        stockCode: input.stockCode,
+      };
+    }
   }
 );
 

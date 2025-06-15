@@ -9,8 +9,9 @@
  * - ResearchCompanyInformationOutput - Kiểu trả về cho hàm researchCompanyInformation.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai, enhancedAI} from '@/ai/genkit';
 import {z} from 'genkit';
+import { StockAnalysisEngine } from '@/lib/analysis/stock-analysis-engine';
 
 const ResearchCompanyInformationInputSchema = z.object({
   stockCode: z.string().describe('Mã cổ phiếu của công ty cần nghiên cứu.'),
@@ -54,8 +55,74 @@ const researchCompanyInformationFlow = ai.defineFlow(
     outputSchema: ResearchCompanyInformationOutputSchema,
   },
   async input => {
-    const {output} = await researchCompanyPrompt(input);
-    return output!;
+    try {
+      // Try using enhanced AI system first
+      const isEnhancedAvailable = await enhancedAI.isCurrentProviderAvailable();
+
+      if (isEnhancedAvailable) {
+        console.log('Using enhanced AI system for company research');
+
+        const analysisEngine = new StockAnalysisEngine();
+        const config = enhancedAI.getCurrentConfig().stockAnalysis;
+
+        try {
+          const companyInfo = await analysisEngine.getCompanyInfo(input.stockCode, config);
+          const recommendation = await analysisEngine.getRecommendation(input.stockCode, config);
+
+          // Convert to legacy format
+          const legacyOutput: ResearchCompanyInformationOutput = {
+            companySummary: `${companyInfo.companyName} (${companyInfo.stockCode})
+
+Ngành: ${companyInfo.sector}
+Lĩnh vực: ${companyInfo.industry}
+
+Mô tả: ${companyInfo.description}
+
+Mô hình kinh doanh: ${companyInfo.businessModel}
+
+Lợi thế cạnh tranh:
+${companyInfo.competitiveAdvantages.map(advantage => `- ${advantage}`).join('\n')}
+
+Rủi ro chính:
+${companyInfo.keyRisks.map(risk => `- ${risk}`).join('\n')}
+
+Tin tức gần đây:
+${companyInfo.recentNews.slice(0, 3).map(news =>
+  `- ${news.title} (${news.source}, ${news.date.toLocaleDateString('vi-VN')})`
+).join('\n')}
+
+Thông tin được cập nhật từ các nguồn đáng tin cậy và hệ thống phân tích tự động.`,
+
+            recommendation: recommendation.recommendation === 'buy' || recommendation.recommendation === 'strong_buy' ? 'nên mua' :
+                           recommendation.recommendation === 'sell' || recommendation.recommendation === 'strong_sell' ? 'không nên mua' :
+                           'cân nhắc mua',
+
+            suggestedPrice: recommendation.targetPrice,
+            stockCode: input.stockCode,
+          };
+
+          return legacyOutput;
+        } catch (enhancedError) {
+          console.warn('Enhanced company research failed, falling back to AI prompt:', enhancedError);
+          // Fall through to original prompt-based analysis
+        }
+      }
+
+      // Fallback to original Genkit flow
+      console.log('Using original Genkit flow for company research');
+      const {output} = await researchCompanyPrompt(input);
+      return output!;
+
+    } catch (error) {
+      console.error('Company research flow failed:', error);
+
+      // Ultimate fallback
+      return {
+        companySummary: `Không thể nghiên cứu thông tin công ty cho mã cổ phiếu ${input.stockCode} do lỗi hệ thống. Vui lòng thử lại sau.`,
+        recommendation: 'không nên mua',
+        stockCode: input.stockCode,
+      };
+    }
   }
 );
 
