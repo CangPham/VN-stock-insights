@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { StockInfo } from '@/types/stock';
 import type { RealTimePrice, OrderBook, TradeTick, MarketIndex } from '@/types/market';
 import type { ComprehensiveFinancialReport } from '@/types/financial';
+import { globalRateLimiter } from './rate-limiter';
 
 // Enum cho các loại nguồn dữ liệu
 export enum DataSourceType {
@@ -165,14 +166,17 @@ export abstract class BaseApiClient {
 
   // Rate limiting implementation
   private async enforceRateLimit(): Promise<void> {
-    // Implement rate limiting logic based on config
+    // First, enforce global rate limiter
+    await globalRateLimiter.waitForAvailability(this.sourceType);
+
+    // Additional per-client rate limit based on configuration
     const now = Date.now();
-    const timeSinceLastRequest = this.stats.lastRequestTime 
-      ? now - this.stats.lastRequestTime.getTime() 
-      : 1000;
+    const timeSinceLastRequest = this.stats.lastRequestTime
+      ? now - this.stats.lastRequestTime.getTime()
+      : Number.MAX_SAFE_INTEGER;
 
     const minInterval = 1000 / this.config.rateLimit.requestsPerSecond;
-    
+
     if (timeSinceLastRequest < minInterval) {
       const delay = minInterval - timeSinceLastRequest;
       await new Promise(resolve => setTimeout(resolve, delay));
