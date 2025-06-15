@@ -1,18 +1,16 @@
+
+// src/ai/flows/recommend-stock-action.ts
 'use server';
 
 /**
- * @fileOverview Analyze a Vietnamese stock and provide a simple buy/no buy recommendation.
- *
- * - recommendStockAction - Analyze stock data and produce a recommendation.
- * - RecommendStockInput - Input type for recommendStockAction.
- * - RecommendStockOutput - Output type for recommendStockAction.
+ * @fileOverview Đưa ra khuyến nghị mua hoặc không mua cho một cổ phiếu Việt Nam.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const RecommendStockInputSchema = z.object({
-  stockCode: z.string().describe('The stock code to analyze (e.g., VCB).'),
+  stockCode: z.string().describe('Mã cổ phiếu cần khuyến nghị (ví dụ: VCB).'),
 });
 export type RecommendStockInput = z.infer<typeof RecommendStockInputSchema>;
 

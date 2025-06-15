@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Failover Manager - Cơ chế chuyển đổi dự phòng cho các API client
  * Thử nhiều nguồn dữ liệu khi một nguồn không khả dụng
@@ -37,11 +38,13 @@ export class FailoverManager {
     const errors: unknown[] = [];
 
     for (const client of clients) {
+
       try {
         const result = await operation(client);
         if (result.success) {
           return result;
         }
+
         errors.push(result.error);
       } catch (error) {
         errors.push(error);
