@@ -351,7 +351,7 @@ export class VPSClient extends BaseApiClient {
   }
 
   // Helper method to generate request ID
-  private generateRequestId(): string {
+  protected generateRequestId(): string {
     return `vps_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 

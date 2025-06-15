@@ -5,7 +5,9 @@
 
 import { z } from 'zod';
 import type { StockInfo, StockPrice } from '@/types/stock';
+import { PriceTrend } from '@/types/market';
 import type { RealTimePrice, OrderBook, TradeTick, MarketIndex } from '@/types/market';
+import { ReportType } from '@/types/financial';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/types/financial';
 import { DataSourceType } from '@/lib/api/base-client';
 
@@ -275,10 +277,10 @@ export class CafeFRealTimePriceTransformer extends BaseTransformer<any, RealTime
     return percent;
   }
 
-  private determineTrend(change: number): 'UP' | 'DOWN' | 'UNCHANGED' | 'CEILING' | 'FLOOR' {
-    if (change > 0) return 'UP';
-    if (change < 0) return 'DOWN';
-    return 'UNCHANGED';
+  private determineTrend(change: number): PriceTrend {
+    if (change > 0) return PriceTrend.UP;
+    if (change < 0) return PriceTrend.DOWN;
+    return PriceTrend.UNCHANGED;
   }
 }
 
@@ -351,18 +353,18 @@ export class VietStockFinancialTransformer extends BaseTransformer<any, BalanceS
     ];
   }
 
-  private parseReportType(type: string): 'QUARTERLY' | 'YEARLY' | 'SEMI_ANNUAL' {
+  private parseReportType(type: string): ReportType {
     const normalizedType = type.toUpperCase();
-    if (normalizedType.includes('QUY') || normalizedType.includes('QUARTER')) return 'QUARTERLY';
-    if (normalizedType.includes('NAM') || normalizedType.includes('YEAR')) return 'YEARLY';
-    if (normalizedType.includes('6T') || normalizedType.includes('SEMI')) return 'SEMI_ANNUAL';
-    return 'QUARTERLY';
+    if (normalizedType.includes('QUY') || normalizedType.includes('QUARTER')) return ReportType.QUARTERLY;
+    if (normalizedType.includes('NAM') || normalizedType.includes('YEAR')) return ReportType.YEARLY;
+    if (normalizedType.includes('6T') || normalizedType.includes('SEMI')) return ReportType.SEMI_ANNUAL;
+    return ReportType.QUARTERLY;
   }
 
-  private parseFinancialValue(value: any): number | undefined {
-    if (value === null || value === undefined || value === '') return undefined;
+  private parseFinancialValue(value: any): number {
+    if (value === null || value === undefined || value === '') return 0;
     const numValue = typeof value === 'string' ? parseFloat(value) : Number(value);
-    return isNaN(numValue) ? undefined : numValue;
+    return isNaN(numValue) ? 0 : numValue;
   }
 }
 

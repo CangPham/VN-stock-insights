@@ -160,7 +160,7 @@ export class CafeFClient extends BaseApiClient {
     return globalErrorHandler.handleWithRetry(
       async () => {
         const url = `${this.config.baseUrl}/ajax/tradeticks.ashx?symbol=${stockCode.toUpperCase()}&limit=${limit}`;
-        const response = await this.makeRequest(url);
+        const response = await this.makeRequest<any[]>(url);
         
         if (!response.success) {
           throw new Error(response.error || 'Failed to fetch trade ticks from CafeF');
@@ -336,7 +336,7 @@ export class CafeFClient extends BaseApiClient {
   }
 
   // Helper method to generate request ID
-  private generateRequestId(): string {
+  protected generateRequestId(): string {
     return `cafef_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
