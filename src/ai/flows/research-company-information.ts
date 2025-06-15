@@ -58,5 +58,3 @@ const researchCompanyInformationFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
